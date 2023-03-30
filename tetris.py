@@ -151,10 +151,22 @@ class Tetrimino:
   def getRef(self):
     return self.refpoint
   
-  def moveDown(self):
-    self.refpoint[1] = self.refpoint[1] + 1 
-    if (self.refpoint[1] == 24):
-      self.static = True
+  def moveDown(self): 
+    if (not self.static):
+      self.refpoint[1] = self.refpoint[1] + 1
+      if (self.refpoint[1] == 23):
+        self.static = True
+  
+  def moveLeft(self):
+    if (not self.static):
+      self.refpoint[0] = self.refpoint[0] + 1
+      self.refpoint[1] = self.refpoint[1] + 1
+
+  def moveRight(self):
+    if (not self.static):
+      self.refpoint[0] = self.refpoint[0] - 1
+      self.refpoint[1] = self.refpoint[1] + 1
+
   def isStatic(self):
     return self.static
 
@@ -162,19 +174,36 @@ if __name__ == '__main__':
   ledgrid = LEDMatrix()
 
   player_input = ""
-  print("thing")
-  while input != "Quit":
+  while player_input != "Quit":
     ledgrid.display()
     print("loop")
     test = Tetrimino()
     print(test.getType())
 
-    while not (test.isStatic()):
-      ledgrid.setLEDon(0,24)
-      player_input = input("Quit?")
+    while True:
+      movement = input("left (l), right (r), or down (d)?")
+      
+      if (movement == "l"):
+        test.moveLeft()
+        print("Moved left")
+      
+      if (movement == "r"):
+        test.moveRight()
+        print("Moved right")
+
+      else:
+        test.moveDown()
+        print("Moved Down")
+        
       ledgrid.displayTetrimino(test)
       ledgrid.display()
-      ledgrid.clearTetrimino(test)
       print(test.getRef())
-      test.moveDown()
+      print(test.isStatic())
+      if (not test.isStatic()): 
+        print("Cleared!")
+        ledgrid.clearTetrimino(test)
+      else:
+        break
       print("\n")
+
+    player_input = input("Quit?")
