@@ -16,15 +16,19 @@ class LED:
   def turnOn(self):
     self.isON = True
 
+  def isOn(self):
+    return self.isON
+
   def display(self):
     if (self.isON):
-      print("x", end= "")
+      print("x ", end= "")
     else:
-      print("o", end= "")
+      print("o ", end= "")
 
 class LEDMatrix:
   def __init__(self):
     self.grid = []
+    self.activePoints = []
     for row in range(ROWS):
             self.grid.append([])
             for col in range(COLS):
@@ -37,80 +41,16 @@ class LEDMatrix:
             print()
   
   def displayTetrimino(self, tetri):
-    refx, refy = tetri.getRef()
-    if (tetri.type == "I"):
-      self.setLEDon(refx, refy)
-      self.setLEDon(refx, refy - 1)
-      self.setLEDon(refx, refy - 2)
-      self.setLEDon(refx, refy - 3)
-    elif (tetri.type == "O"):
-      self.setLEDon(refx, refy)
-      self.setLEDon(refx, refy - 1)
-      self.setLEDon(refx - 1, refy)
-      self.setLEDon(refx - 1, refy - 1)
-    elif (tetri.type == "T"):
-      self.setLEDon(refx, refy)
-      self.setLEDon(refx, refy - 1)
-      self.setLEDon(refx - 1, refy - 1)
-      self.setLEDon(refx + 1, refy - 1)
-    elif (tetri.type == "S"):
-      self.setLEDon(refx, refy)
-      self.setLEDon(refx - 1, refy)
-      self.setLEDon(refx - 1, refy - 1)
-      self.setLEDon(refx - 2, refy - 1)
-    elif (tetri.type == "Z"):
-      self.setLEDon(refx, refy)
-      self.setLEDon(refx + 1, refy)
-      self.setLEDon(refx + 1, refy - 1)
-      self.setLEDon(refx + 2, refy - 1)
-    elif (tetri.type == "J"):
-      self.setLEDon(refx, refy)
-      self.setLEDon(refx - 1, refy)
-      self.setLEDon(refx - 2, refy)
-      self.setLEDon(refx - 2, refy - 1)
-    elif (tetri.type == "L"):
-      self.setLEDon(refx, refy)
-      self.setLEDon(refx + 1, refy)
-      self.setLEDon(refx + 2, refy)
-      self.setLEDon(refx + 2, refy - 1)
+    points = tetri.getPoints()
+    for pair in points:
+      x, y = pair
+      self.setLEDon(x, y)
     
   def clearTetrimino(self, tetri):
-    refx, refy = tetri.getRef()
-    if (tetri.type == "I"):
-      self.setLEDoff(refx, refy)
-      self.setLEDoff(refx, refy - 1)
-      self.setLEDoff(refx, refy - 2)
-      self.setLEDoff(refx, refy - 3)
-    elif (tetri.type == "O"):
-      self.setLEDoff(refx, refy)
-      self.setLEDoff(refx, refy - 1)
-      self.setLEDoff(refx - 1, refy)
-      self.setLEDoff(refx - 1, refy - 1)
-    elif (tetri.type == "T"):
-      self.setLEDoff(refx, refy)
-      self.setLEDoff(refx, refy - 1)
-      self.setLEDoff(refx - 1, refy - 1)
-      self.setLEDoff(refx + 1, refy - 1)
-    elif (tetri.type == "S"):
-      self.setLEDoff(refx, refy)
-      self.setLEDoff(refx - 1, refy)
-      self.setLEDoff(refx - 1, refy - 1)
-      self.setLEDoff(refx - 2, refy - 1)
-    elif (tetri.type == "Z"):
-      self.setLEDoff(refx, refy)
-      self.setLEDoff(refx + 1, refy)
-      self.setLEDoff(refx + 1, refy - 1)
-      self.setLEDoff(refx + 2, refy - 1)
-    elif (tetri.type == "J"):
-      self.setLEDoff(refx, refy)
-      self.setLEDoff(refx - 1, refy)
-      self.setLEDoff(refx - 2, refy)
-      self.setLEDoff(refx - 2, refy - 1)
-    elif (tetri.type == "L"):
-      self.setLEDoff(refx, refy)
-      self.setLEDoff(refx + 1, refy)
-      self.setLEDoff(refx + 2, refy)
-      self.setLEDoff(refx + 2, refy - 1)
+    points = tetri.getPoints()
+    for pair in points:
+      x, y = pair
+      self.setLEDoff(x, y)
 
   def setLEDon(self, x, y):
     if (y>= 0 and y < 24):
@@ -121,7 +61,55 @@ class LEDMatrix:
     if (y>= 0 and y < 24):
       if (x >= 0 and x < 10):
         self.grid[x][y].turnOff()
+
+  def getActiveBlock(self):
+    return self.activePoints
+
+  def detectVerticalCollision(self, tetri):
+    points = tetri.getPoints()
+    for pair in points:
+      x, y = pair
+      y += 1
+      if ((self.activePoints.count([x, y]) != 0) or (y == 24)):
+        for active in points:
+          aX, aY = active
+          self.activePoints.append([aX, aY])
+        tetri.setStatic()
+        if (self.detectFullLine(y - 1)):
+          print("-------------Full Line--------------")
+        return True
+    return False
   
+  def detectHorizontalCollisionL(self, tetri):
+    points = tetri.getPoints()
+    for pair in points:
+      x, y = pair
+      x += 1
+      if ((self.activePoints.count([x, y]) != 0) or (x == 10)):
+        return True
+    return False
+
+  def detectHorizontalCollisionR(self, tetri):
+    points = tetri.getPoints()
+    for pair in points:
+      x, y = pair
+      x -= 1
+      if ((self.activePoints.count([x, y]) != 0) or (x == -1)):
+        return True
+    return False
+
+  def detectFullLine(self, line):
+    count = 0
+    print(line)
+    for pair in self.activePoints:
+        x, y = pair
+        if (y == line):
+          count += 1
+    if (count == 10):
+      return True
+    print(count)
+    return False
+
 
 class Tetrimino:
   def __init__(self):
@@ -151,6 +139,38 @@ class Tetrimino:
   def getRef(self):
     return self.refpoint
   
+  def getPoints(self):
+    points = [(self.refpoint[0], self.refpoint[1])]
+    if (self.type == "I"):
+      points.append([self.refpoint[0], self.refpoint[1] - 1])
+      points.append([self.refpoint[0], self.refpoint[1] - 2])
+      points.append([self.refpoint[0], self.refpoint[1] - 3])
+    elif (self.type == "O"):
+      points.append([self.refpoint[0], self.refpoint[1] - 1])
+      points.append([self.refpoint[0] - 1, self.refpoint[1]])
+      points.append([self.refpoint[0] - 1, self.refpoint[1] - 1])
+    elif (self.type == "T"):
+      points.append([self.refpoint[0], self.refpoint[1] - 1])
+      points.append([self.refpoint[0] - 1, self.refpoint[1] - 1])
+      points.append([self.refpoint[0] + 1, self.refpoint[1] - 1])
+    elif (self.type == "S"):
+      points.append([self.refpoint[0] - 1, self.refpoint[1]])
+      points.append([self.refpoint[0] - 1, self.refpoint[1] - 1])
+      points.append([self.refpoint[0] - 2, self.refpoint[1] - 1])
+    elif (self.type == "Z"):
+      points.append([self.refpoint[0] + 1, self.refpoint[1]])
+      points.append([self.refpoint[0] + 1, self.refpoint[1] - 1])
+      points.append([self.refpoint[0] + 2, self.refpoint[1] - 1])
+    elif (self.type == "J"):
+      points.append([self.refpoint[0] - 1, self.refpoint[1]])
+      points.append([self.refpoint[0] - 2, self.refpoint[1]])
+      points.append([self.refpoint[0] - 2, self.refpoint[1] - 1])
+    elif (self.type == "L"):
+      points.append([self.refpoint[0] + 1, self.refpoint[1]])
+      points.append([self.refpoint[0] + 2, self.refpoint[1]])
+      points.append([self.refpoint[0] + 2, self.refpoint[1] - 1])
+    return points
+
   def moveDown(self): 
     if (not self.static):
       self.refpoint[1] = self.refpoint[1] + 1
@@ -160,12 +180,13 @@ class Tetrimino:
   def moveLeft(self):
     if (not self.static):
       self.refpoint[0] = self.refpoint[0] + 1
-      self.refpoint[1] = self.refpoint[1] + 1
 
   def moveRight(self):
     if (not self.static):
       self.refpoint[0] = self.refpoint[0] - 1
-      self.refpoint[1] = self.refpoint[1] + 1
+
+  def setStatic(self):
+     self.static = True
 
   def isStatic(self):
     return self.static
@@ -181,26 +202,32 @@ if __name__ == '__main__':
     print(test.getType())
 
     while True:
-      movement = input("left (l), right (r), or down (d)?")
+      movement = input("left (l), right (r), down (d), or drop?")
       
       if (movement == "l"):
-        test.moveLeft()
+        if (not ledgrid.detectHorizontalCollisionL(test)):
+          test.moveLeft()
         print("Moved left")
+        test.moveDown()
       
       if (movement == "r"):
-        test.moveRight()
+        if (not ledgrid.detectHorizontalCollisionR(test)):   
+          test.moveRight()
+          test.moveDown()
         print("Moved right")
+        test.moveDown()
+
+      if (movement == "drop"):
+        while (not ledgrid.detectVerticalCollision(test)):
+          test.moveDown()
 
       else:
-        test.moveDown()
-        print("Moved Down")
-        
+          test.moveDown()
+
+
       ledgrid.displayTetrimino(test)
       ledgrid.display()
-      print(test.getRef())
-      print(test.isStatic())
       if (not test.isStatic()): 
-        print("Cleared!")
         ledgrid.clearTetrimino(test)
       else:
         break
