@@ -1,6 +1,8 @@
 import cv2
 import mediapipe as mp
 import numpy as np
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
 
 def get_frame():
     cap = cv2.VideoCapture(0)
@@ -22,7 +24,7 @@ def detect_hand_from_image():
     frame = cv2.flip(frame, 1)
 
     # Partition the image into 10 vertical zones
-    num_zones = 10
+    num_zones = 3
     zone_width = frame.shape[1] // num_zones
     for i in range(num_zones):
         x = i * zone_width
@@ -60,4 +62,32 @@ def detect_hand_from_image():
     # Destroy the window
     cv2.destroyAllWindows()
 
-    return hand_center_x, hand_center_y, zone_num
+    return zone_num
+
+def detect_gesture_from_image():
+    base_options = python.BaseOptions(model_asset_path='gesture_recognizer.task')
+    options = vision.GestureRecognizerOptions(base_options=base_options)
+    recognizer = vision.GestureRecognizer.create_from_options(options)
+    
+    images = get_frame()
+    results = None
+    # STEP 3: Load the input image.
+    # Load the input image from a numpy array.
+    image = mp.Image(image_format=mp.ImageFormat.SRGB, data=images)
+
+   
+    # STEP 4: Recognize gestures in the input image.
+    recognition_result = recognizer.recognize(image)
+   
+    # STEP 5: Process the result. In this case, visualize it.
+    top_gesture = recognition_result.gestures
+    hand_landmarks = recognition_result.hand_landmarks
+    results = (top_gesture, hand_landmarks)
+    
+    cv2.imshow('Hand Detection', images)
+    # Wait for 1 millisecond and automatically close the window
+    cv2.waitKey(1000)
+    print(recognition_result)
+    # Destroy the window
+    cv2.destroyAllWindows()
+    
