@@ -65,6 +65,17 @@ class LEDMatrix:
   def getActiveBlock(self):
     return self.activePoints
 
+  def clearLine(self, line):
+    for pair in self.activePoints.copy():
+        self.grid[pair[0]][pair[1]].turnOff()
+        if (pair[1] == line):
+          self.activePoints.remove(pair)
+        else: 
+          pair[1] += 1
+    for pair in self.activePoints:
+      x, y = pair
+      self.grid[x][y].turnOn()
+
   def detectVerticalCollision(self, tetri):
     points = tetri.getPoints()
     for pair in points:
@@ -75,8 +86,6 @@ class LEDMatrix:
           aX, aY = active
           self.activePoints.append([aX, aY])
         tetri.setStatic()
-        if (self.detectFullLine(y - 1)):
-          print("-------------Full Line--------------")
         return True
     return False
   
@@ -98,24 +107,32 @@ class LEDMatrix:
         return True
     return False
 
+  def validRotation(self, tetri):
+    type = tetri.getType()
+    tetri.rotate()
+    points = tetri.getPoints()
+    for pair in points:
+      x, y = pair
+      if ((self.activePoints.count([x, y]) != 0) or (x > 9) or (x < 0) or (y > 24)):
+        print('invalid rotation')
+        tetri.setType(type)
+        return 
+  
   def detectFullLine(self, line):
     count = 0
-    print(line)
     for pair in self.activePoints:
         x, y = pair
         if (y == line):
           count += 1
-    if (count == 10):
-      return True
-    print(count)
-    return False
+    return count
 
 
 class Tetrimino:
   def __init__(self):
       self.refpoint = [5,0]
       self.static = False
-      a = random.randint(1,7) 
+     # a = random.randint(1,7) 
+      a = 3
       if (a == 1):
         self.type = "I"
       elif (a == 2):
@@ -136,6 +153,9 @@ class Tetrimino:
   def getType(self):
     return self.type
 
+  def setType(self, new_type):
+    self.type = new_type
+
   def getRef(self):
     return self.refpoint
   
@@ -150,9 +170,9 @@ class Tetrimino:
       points.append([self.refpoint[0] - 1, self.refpoint[1]])
       points.append([self.refpoint[0] - 1, self.refpoint[1] - 1])
     elif (self.type == "T"):
-      points.append([self.refpoint[0], self.refpoint[1] - 1])
-      points.append([self.refpoint[0] - 1, self.refpoint[1] - 1])
-      points.append([self.refpoint[0] + 1, self.refpoint[1] - 1])
+      points.append([self.refpoint[0], self.refpoint[1] + 1])
+      points.append([self.refpoint[0] - 1, self.refpoint[1]])
+      points.append([self.refpoint[0] + 1, self.refpoint[1]])
     elif (self.type == "S"):
       points.append([self.refpoint[0] - 1, self.refpoint[1]])
       points.append([self.refpoint[0] - 1, self.refpoint[1] - 1])
@@ -169,6 +189,22 @@ class Tetrimino:
       points.append([self.refpoint[0] + 1, self.refpoint[1]])
       points.append([self.refpoint[0] + 2, self.refpoint[1]])
       points.append([self.refpoint[0] + 2, self.refpoint[1] - 1])
+    elif (self.type == "I_rot"):
+      points.append([self.refpoint[0] - 1, self.refpoint[1]])
+      points.append([self.refpoint[0] - 2, self.refpoint[1]])
+      points.append([self.refpoint[0] - 3, self.refpoint[1]])
+    elif (self.type == "T_rot_1"):
+      points.append([self.refpoint[0], self.refpoint[1] + 1])
+      points.append([self.refpoint[0], self.refpoint[1] - 1])
+      points.append([self.refpoint[0] + 1, self.refpoint[1]])
+    elif (self.type == "T_rot_2"):
+      points.append([self.refpoint[0] - 1, self.refpoint[1]])
+      points.append([self.refpoint[0] + 1, self.refpoint[1]])
+      points.append([self.refpoint[0], self.refpoint[1] - 1])
+    elif (self.type == "T_rot_3"):
+      points.append([self.refpoint[0], self.refpoint[1] + 1])
+      points.append([self.refpoint[0], self.refpoint[1] - 1])
+      points.append([self.refpoint[0] - 1, self.refpoint[1]])
     return points
 
   def moveDown(self): 
@@ -184,6 +220,20 @@ class Tetrimino:
   def moveRight(self):
     if (not self.static):
       self.refpoint[0] = self.refpoint[0] - 1
+    
+  def rotate(self):
+    if (self.type == "I"):
+      self.type = "I_rot"
+    elif (self.type == "I_rot"):
+      self.type = "I"
+    elif (self.type == "T"):
+      self.type = "T_rot_1"
+    elif (self.type == "T_rot_1"):
+      self.type = "T_rot_2"
+    elif (self.type == "T_rot_2"):
+      self.type = "T_rot_3"
+    elif (self.type == "T_rot_3"):
+      self.type = "T"
 
   def setStatic(self):
      self.static = True
@@ -193,44 +243,51 @@ class Tetrimino:
 
 if __name__ == '__main__':
   ledgrid = LEDMatrix()
-
+  ledgrid.display()
   player_input = ""
-  while player_input != "Quit":
-    ledgrid.display()
-    print("loop")
+  while True:
     test = Tetrimino()
     print(test.getType())
 
     while True:
-      movement = input("left (l), right (r), down (d), or drop?")
+      movement = input("left (l), right (r), down (d), rotate (y), or drop(s)?")
       
       if (movement == "l"):
         if (not ledgrid.detectHorizontalCollisionL(test)):
           test.moveLeft()
         print("Moved left")
-        test.moveDown()
       
       if (movement == "r"):
         if (not ledgrid.detectHorizontalCollisionR(test)):   
           test.moveRight()
-          test.moveDown()
         print("Moved right")
-        test.moveDown()
 
-      if (movement == "drop"):
+      if (movement == "s"):
         while (not ledgrid.detectVerticalCollision(test)):
           test.moveDown()
+        print("Dropped")  
 
-      else:
-          test.moveDown()
-
+      if (movement == "d"):
+        test.moveDown()
+        print("Moved down")
+      
+      if (movement == "y"):
+        print(test.getPoints())
+        ledgrid.validRotation(test)
+        print('Rotated')
+        
 
       ledgrid.displayTetrimino(test)
       ledgrid.display()
       if (not test.isStatic()): 
         ledgrid.clearTetrimino(test)
-      else:
-        break
-      print("\n")
+      if (test.isStatic()): 
+        for i in range(23, 0, -1):
+          led_num = ledgrid.detectFullLine(i)
+          if (led_num == 10):
+            ledgrid.clearLine(i)
+          if (led_num == 0):
+            break
 
-    player_input = input("Quit?")
+        break      
+      print("\n")
