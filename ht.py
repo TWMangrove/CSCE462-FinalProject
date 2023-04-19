@@ -5,7 +5,7 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 def get_frame():
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(2)
     ret, frame = cap.read()
     cap.release()
     return frame

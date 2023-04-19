@@ -1,5 +1,7 @@
+import threading
 import random
-import time
+from time import sleep, perf_counter, time
+from ht import detect_hand_from_image
 
 ROWS = 10
 COLS = 24
@@ -131,8 +133,7 @@ class Tetrimino:
   def __init__(self):
       self.refpoint = [5,0]
       self.static = False
-     # a = random.randint(1,7) 
-      a = 3
+      a = random.randint(1,7) 
       if (a == 1):
         self.type = "I"
       elif (a == 2):
@@ -164,7 +165,7 @@ class Tetrimino:
     if (self.type == "I"):
       points.append([self.refpoint[0], self.refpoint[1] - 1])
       points.append([self.refpoint[0], self.refpoint[1] - 2])
-      points.append([self.refpoint[0], self.refpoint[1] - 3])
+      points.append([self.refpoint[0], self.refpoint[1] + 1])
     elif (self.type == "O"):
       points.append([self.refpoint[0], self.refpoint[1] - 1])
       points.append([self.refpoint[0] - 1, self.refpoint[1]])
@@ -175,24 +176,24 @@ class Tetrimino:
       points.append([self.refpoint[0] + 1, self.refpoint[1]])
     elif (self.type == "S"):
       points.append([self.refpoint[0] - 1, self.refpoint[1]])
-      points.append([self.refpoint[0] - 1, self.refpoint[1] - 1])
-      points.append([self.refpoint[0] - 2, self.refpoint[1] - 1])
+      points.append([self.refpoint[0], self.refpoint[1] + 1])
+      points.append([self.refpoint[0] +1, self.refpoint[1] + 1])
     elif (self.type == "Z"):
       points.append([self.refpoint[0] + 1, self.refpoint[1]])
-      points.append([self.refpoint[0] + 1, self.refpoint[1] - 1])
-      points.append([self.refpoint[0] + 2, self.refpoint[1] - 1])
+      points.append([self.refpoint[0], self.refpoint[1] + 1])
+      points.append([self.refpoint[0] - 1, self.refpoint[1] + 1])
     elif (self.type == "J"):
-      points.append([self.refpoint[0] - 1, self.refpoint[1]])
-      points.append([self.refpoint[0] - 2, self.refpoint[1]])
-      points.append([self.refpoint[0] - 2, self.refpoint[1] - 1])
-    elif (self.type == "L"):
       points.append([self.refpoint[0] + 1, self.refpoint[1]])
-      points.append([self.refpoint[0] + 2, self.refpoint[1]])
-      points.append([self.refpoint[0] + 2, self.refpoint[1] - 1])
+      points.append([self.refpoint[0] - 1, self.refpoint[1]])
+      points.append([self.refpoint[0] - 1, self.refpoint[1] - 1])
+    elif (self.type == "L"):
+      points.append([self.refpoint[0] - 1, self.refpoint[1]])
+      points.append([self.refpoint[0] + 1, self.refpoint[1]])
+      points.append([self.refpoint[0] + 1, self.refpoint[1] - 1])
     elif (self.type == "I_rot"):
       points.append([self.refpoint[0] - 1, self.refpoint[1]])
       points.append([self.refpoint[0] - 2, self.refpoint[1]])
-      points.append([self.refpoint[0] - 3, self.refpoint[1]])
+      points.append([self.refpoint[0] + 1, self.refpoint[1]])
     elif (self.type == "T_rot_1"):
       points.append([self.refpoint[0], self.refpoint[1] + 1])
       points.append([self.refpoint[0], self.refpoint[1] - 1])
@@ -205,6 +206,38 @@ class Tetrimino:
       points.append([self.refpoint[0], self.refpoint[1] + 1])
       points.append([self.refpoint[0], self.refpoint[1] - 1])
       points.append([self.refpoint[0] - 1, self.refpoint[1]])
+    elif (self.type == "S_rot"):
+      points.append([self.refpoint[0] + 1, self.refpoint[1]])
+      points.append([self.refpoint[0] + 1, self.refpoint[1] - 1])
+      points.append([self.refpoint[0], self.refpoint[1] + 1])
+    elif (self.type == "Z_rot"):
+      points.append([self.refpoint[0] - 1, self.refpoint[1]])
+      points.append([self.refpoint[0], self.refpoint[1] + 1])
+      points.append([self.refpoint[0] - 1, self.refpoint[1] -  1])
+    elif (self.type == "J_rot"):
+      points.append([self.refpoint[0] - 1, self.refpoint[1] + 1])
+      points.append([self.refpoint[0], self.refpoint[1] - 1])
+      points.append([self.refpoint[0], self.refpoint[1] + 1])
+    elif (self.type == "J_rot_2"):
+      points.append([self.refpoint[0] - 1, self.refpoint[1]])
+      points.append([self.refpoint[0] + 1, self.refpoint[1] + 1])
+      points.append([self.refpoint[0] + 1, self.refpoint[1]])
+    elif (self.type == "J_rot_3"):
+        points.append([self.refpoint[0], self.refpoint[1] - 1])
+        points.append([self.refpoint[0], self.refpoint[1] + 1])
+        points.append([self.refpoint[0] + 1, self.refpoint[1] - 1])
+    elif (self.type == "L_rot"):
+      points.append([self.refpoint[0], self.refpoint[1] - 1])
+      points.append([self.refpoint[0], self.refpoint[1] + 1])
+      points.append([self.refpoint[0] - 1, self.refpoint[1] - 1])
+    elif (self.type == "L_rot_2"):
+      points.append([self.refpoint[0] - 1, self.refpoint[1]])
+      points.append([self.refpoint[0] - 1, self.refpoint[1] + 1])
+      points.append([self.refpoint[0] + 1, self.refpoint[1]])
+    elif (self.type == "L_rot_3"):
+      points.append([self.refpoint[0], self.refpoint[1] + 1])
+      points.append([self.refpoint[0], self.refpoint[1] - 1])
+      points.append([self.refpoint[0] + 1, self.refpoint[1] + 1])
     return points
 
   def moveDown(self): 
@@ -234,6 +267,30 @@ class Tetrimino:
       self.type = "T_rot_3"
     elif (self.type == "T_rot_3"):
       self.type = "T"
+    elif (self.type == "S"):
+      self.type = "S_rot"
+    elif (self.type == "S_rot"):
+      self.type = "S"
+    elif (self.type == "Z"):
+      self.type = "Z_rot"
+    elif (self.type == "Z_rot"):
+      self.type = "Z"
+    elif (self.type == "J"):
+      self.type = "J_rot"
+    elif (self.type == "J_rot"):
+      self.type = "J_rot_2"
+    elif (self.type == "J_rot_2"):
+      self.type = "J_rot_3"
+    elif (self.type == "J_rot_3"):
+      self.type = "J"
+    elif (self.type == "L"):
+      self.type = "L_rot"
+    elif (self.type == "L_rot"):
+      self.type = "L_rot_2"
+    elif (self.type == "L_rot_2"):
+      self.type = "L_rot_3"
+    elif (self.type == "L_rot_3"):
+      self.type = "L"
 
   def setStatic(self):
      self.static = True
@@ -245,38 +302,42 @@ if __name__ == '__main__':
   ledgrid = LEDMatrix()
   ledgrid.display()
   player_input = ""
+  
+  
   while True:
     test = Tetrimino()
-    print(test.getType())
-
+    fallTracker = perf_counter()
     while True:
-      movement = input("left (l), right (r), down (d), rotate (y), or drop(s)?")
-      
-      if (movement == "l"):
+      #movement = input("left (l), right (r), down (d), rotate (y), or drop(s)?") 
+      zone = detect_hand_from_image()
+      if (zone == 0):
         if (not ledgrid.detectHorizontalCollisionL(test)):
           test.moveLeft()
         print("Moved left")
       
-      if (movement == "r"):
+      if (zone == 2):
         if (not ledgrid.detectHorizontalCollisionR(test)):   
           test.moveRight()
         print("Moved right")
 
+      '''
       if (movement == "s"):
         while (not ledgrid.detectVerticalCollision(test)):
           test.moveDown()
-        print("Dropped")  
-
-      if (movement == "d"):
-        test.moveDown()
-        print("Moved down")
+        print("Dropped") '''
       
-      if (movement == "y"):
-        print(test.getPoints())
-        ledgrid.validRotation(test)
-        print('Rotated')
+      if (perf_counter() - fallTracker > 1):
+        fallTracker = perf_counter()
+        if (not ledgrid.detectVerticalCollision(test)):
+          test.moveDown()
+          print("Moved down")
+          
+	  
+      #if (movement == "y"):
+       # print(test.getPoints())
+        #ledgrid.validRotation(test)
+        #print('Rotated') 
         
-
       ledgrid.displayTetrimino(test)
       ledgrid.display()
       if (not test.isStatic()): 
@@ -286,8 +347,10 @@ if __name__ == '__main__':
           led_num = ledgrid.detectFullLine(i)
           if (led_num == 10):
             ledgrid.clearLine(i)
+            i -= 1
           if (led_num == 0):
             break
 
         break      
       print("\n")
+
