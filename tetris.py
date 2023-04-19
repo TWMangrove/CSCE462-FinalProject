@@ -297,12 +297,30 @@ class Tetrimino:
 
   def isStatic(self):
     return self.static
-
+def startingCheck():
+    leftCheck = False
+    midCheck = False
+    rightCheck = False
+    
+    while (leftCheck and midCheck and rightCheck) == False:
+        zone = detect_hand_from_image()
+        if (zone == 0):
+          leftCheck = True
+          print("left zone verified - hand found!")
+        if (zone == 1):
+            midCheck = True
+            print("middle zone verified - hand found!")
+        if (zone == 2):
+         rightCheck = True
+         print("right zone verified - hand found!")
+    
 if __name__ == '__main__':
+  
+  startingCheck()
+  sleep(3)
   ledgrid = LEDMatrix()
   ledgrid.display()
   player_input = ""
-  
   
   while True:
     test = Tetrimino()
