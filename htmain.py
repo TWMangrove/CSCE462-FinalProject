@@ -1,8 +1,8 @@
 from ht import detect_gesture_from_image
-from ht import detect_hand_from_image
+from ht2 import detect_hand_from_image
+
 
 #detect_gesture_from_image()
-
 
 while True:
     zone = detect_hand_from_image()
